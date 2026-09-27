@@ -91,6 +91,11 @@ export function say(text: string, start: number, gap: number): Word[] {
   });
 }
 
+/** Break a said line into two lines after `at` words (no break when `at` is past the end). */
+export function splitLines(words: Word[], at: number): Word[][] {
+  return at >= words.length ? [words] : [words.slice(0, at), words.slice(at)];
+}
+
 /** A fade-and-rise for a block that arrives at `from` and leaves at `to`. */
 export function rise(t: number, from: number, to = Infinity, distance = 40) {
   const u = land(clamp01((t - from) / 0.35));

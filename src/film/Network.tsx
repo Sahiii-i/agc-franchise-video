@@ -2,9 +2,10 @@ import { Easing } from "remotion";
 
 import { camera, type CameraKey } from "../kit/camera";
 import { clamp01 } from "../kit/time";
-import { C, FONT, SIDE } from "../shared/tokens";
-import { rise, say, Words } from "../shared/Words";
+import { C, FONT } from "../shared/tokens";
+import { rise, say, splitLines, Words } from "../shared/Words";
 import { ACT, BEAT, b } from "./cues";
+import { useLayout } from "./layout";
 import map from "./map.json";
 
 const ease = Easing.bezier(0.22, 1, 0.36, 1);
@@ -12,14 +13,14 @@ const ease = Easing.bezier(0.22, 1, 0.36, 1);
 // Every land dot as one path of zero-length round-capped strokes: one element instead of 4,000 circles.
 const DOTS = map.dots.map(([x, y]) => `M${x} ${y}h0`).join("");
 
-// The band of the frame the map is filmed in.
-const BAND = { top: 560, height: 700 } as const;
-
 /**
  * The network: the camera starts close on Singapore HQ, arcs fly out to every office city nearest first,
  * and the camera pulls back to the whole world as the far ones land. The counter tracks the arcs.
  */
 export function Network({ t }: { t: number }) {
+  const L = useLayout();
+  const N = L.network;
+  const BAND = N.band;
   const [from, to] = ACT.network;
   if (t < from - 0.05 || t > to + 0.3) return null;
   const leave = clamp01((t - (to - 0.1)) / 0.18);
@@ -28,7 +29,7 @@ export function Network({ t }: { t: number }) {
   const keys: CameraKey[] = [
     [0, hx, hy, 2.6],
     [b(8, 3), hx + 60, hy - 60, 1.35],
-    [b(9, 2), map.width / 2, map.height / 2 + 40, 0.53],
+    [b(9, 2), map.width / 2, map.height / 2 + 40, N.fit],
   ];
   const view = camera(t, keys);
   const z = view.zoom;
@@ -43,26 +44,26 @@ export function Network({ t }: { t: number }) {
   const count = complete ? 40 : Math.floor((40 * landed) / map.cities.length);
 
   const dotsIn = ease(clamp01((t - from) / 0.5));
-  const toScreen = (x: number, y: number) => ({ x: 540 + (x - view.x) * z, y: BAND.height / 2 + (y - view.y) * z });
+  const toScreen = (x: number, y: number) => ({ x: BAND.w / 2 + (x - view.x) * z, y: BAND.h / 2 + (y - view.y) * z });
   const hqScreen = toScreen(hx, hy);
   const beatPhase = ((t - from) / BEAT) % 1;
   const pulse = ease(beatPhase);
 
   return (
     <div style={{ position: "absolute", inset: 0, opacity: 1 - leave, filter: leave > 0 ? `blur(${leave * 12}px)` : undefined }}>
-      <div style={{ position: "absolute", left: SIDE, top: 300, fontFamily: FONT, fontSize: 30, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: C.accent, ...rise(t, from) }}>
+      <div style={{ position: "absolute", left: N.eyebrow.x, top: N.eyebrow.y, fontFamily: FONT, fontSize: 30, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: C.accent, ...rise(t, from) }}>
         The network you join
       </div>
-      <div style={{ position: "absolute", left: SIDE, top: 356, width: 920 }}>
-        <Words t={t} size={92} align="left" lines={[say("Join the Apex network.", b(8, 1, 0.5), BEAT / 2)]} />
+      <div style={{ position: "absolute", left: N.head.x, top: N.head.y }}>
+        <Words t={t} size={N.head.size} align="left" lines={splitLines(say("Join the Apex network.", b(8, 1, 0.5), BEAT / 2), N.head.split)} />
       </div>
 
-      <div style={{ position: "absolute", left: 0, top: BAND.top, width: 1080, height: BAND.height, overflow: "hidden" }}>
+      <div style={{ position: "absolute", left: BAND.x, top: BAND.y, width: BAND.w, height: BAND.h, overflow: "hidden" }}>
         <svg
           width={map.width}
           height={map.height}
           viewBox={`0 0 ${map.width} ${map.height}`}
-          style={{ position: "absolute", left: 0, top: 0, transformOrigin: "0 0", transform: `translate(540px, ${BAND.height / 2}px) scale(${z}) translate(${-view.x}px, ${-view.y}px)`, overflow: "visible" }}
+          style={{ position: "absolute", left: 0, top: 0, transformOrigin: "0 0", transform: `translate(${BAND.w / 2}px, ${BAND.h / 2}px) scale(${z}) translate(${-view.x}px, ${-view.y}px)`, overflow: "visible" }}
         >
           <path d={DOTS} stroke="#465257" strokeWidth={map.spacing * 0.46} strokeLinecap="round" opacity={dotsIn} />
           {map.cities.map((city, i) => {
@@ -108,7 +109,7 @@ export function Network({ t }: { t: number }) {
         </div>
       </div>
 
-      <div style={{ position: "absolute", left: SIDE, top: 1300, display: "flex", alignItems: "baseline", gap: 26, ...rise(t, b(8, 2)) }}>
+      <div style={{ position: "absolute", left: N.stat.x, top: N.stat.y, display: "flex", alignItems: "baseline", gap: 26, ...rise(t, b(8, 2)) }}>
         <span style={{ fontFamily: FONT, fontWeight: 700, fontSize: 190, letterSpacing: "-0.05em", color: C.accent, lineHeight: 1, fontVariantNumeric: "tabular-nums", minWidth: "1.72em", textAlign: "right" }}>
           {count}
           <span style={{ opacity: complete ? 1 : 0 }}>+</span>

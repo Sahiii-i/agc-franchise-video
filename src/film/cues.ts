@@ -4,8 +4,8 @@ import { at, type Grid } from "../kit/time";
 // The edit (edit.json) starts on song bar 3's downbeat, so the film's grid starts at 0.
 export const GRID: Grid = { bpm: 118.004, firstBeat: 0, pickupBeats: 0, beatsPerBar: 4 };
 export const BEAT = 60 / GRID.bpm;
-export const BARS = 29;
-export const DURATION = 58.981;
+export const BARS = 28;
+export const DURATION = 56.947;
 
 /** Seconds at a film bar (1-based) and beat. Scene code never holds a literal time. */
 export const b = (bar: number, beat = 1, fraction = 0) => at(GRID, bar, beat, fraction);

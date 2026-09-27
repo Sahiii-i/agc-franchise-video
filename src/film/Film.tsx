@@ -5,9 +5,10 @@ import { step, track, type SpringConfig } from "../kit/spring";
 import { clamp01, progress, useTime } from "../kit/time";
 import { Clip, Music, Sfx, type Hit } from "../shared/Media";
 import { Mark } from "../shared/Mark";
-import { C, FONT, SIDE } from "../shared/tokens";
-import { rise, say, Words } from "../shared/Words";
+import { C, FONT } from "../shared/tokens";
+import { rise, say, splitLines, Words } from "../shared/Words";
 import { ACT, BEAT, b } from "./cues";
+import { useLayout } from "./layout";
 import { Network } from "./Network";
 
 const glide: SpringConfig = { stiffness: 150, damping: 20, mass: 1 };
@@ -24,8 +25,11 @@ const eyebrow = (color: string): CSSProperties => ({
   color,
 });
 
-function Abs({ x = SIDE, y, w, children, style }: { x?: number; y: number; w?: number; children: ReactNode; style?: CSSProperties }) {
-  return <div style={{ position: "absolute", left: x, top: y, width: w ?? 1080 - 2 * x, ...style }}>{children}</div>;
+/** An absolutely placed block; by default it spans the frame between the side margins. */
+function Abs({ x, y, w, children, style }: { x?: number; y: number; w?: number; children: ReactNode; style?: CSSProperties }) {
+  const L = useLayout();
+  const left = x ?? L.S;
+  return <div style={{ position: "absolute", left, top: y, width: w ?? L.W - 2 * left, ...style }}>{children}</div>;
 }
 
 /** Blur the whole act away over its last 0.18 s. */
@@ -36,9 +40,12 @@ const exit = (t: number, to: number): CSSProperties => {
 
 /** The one Apex mark: draws itself, travels to center on the drop, rests in the corner, returns for the end card. */
 function BrandMark({ t }: { t: number }) {
-  const x = track(t, [[0, 540], [ACT.reveal[0], 540], [ACT.network[0], SIDE + 30], [ACT.end[0], 540]], glide);
-  const y = track(t, [[0, 330], [ACT.reveal[0], 610], [ACT.network[0], 232], [ACT.end[0], 420]], glide);
-  const size = track(t, [[0, 120], [ACT.reveal[0], 250], [ACT.network[0], 60], [ACT.end[0], 150]], glide);
+  const { mark: M } = useLayout();
+  const at = [0, ACT.reveal[0], ACT.network[0], ACT.end[0]];
+  const spots = [M.start, M.reveal, M.corner, M.end];
+  const x = track(t, at.map((time, i) => [time, spots[i][0]] as const), glide);
+  const y = track(t, at.map((time, i) => [time, spots[i][1]] as const), glide);
+  const size = track(t, at.map((time, i) => [time, spots[i][2]] as const), glide);
   const draw = ease(progress(t, 0.02, 1.0));
   const fill = ease(progress(t, b(1, 3), 0.3));
   return (
@@ -49,47 +56,38 @@ function BrandMark({ t }: { t: number }) {
 }
 
 function Hook({ t }: { t: number }) {
+  const L = useLayout();
+  const H = L.hook;
   const [, to] = ACT.hook;
   if (!within(t, ACT.hook)) return null;
   const tag = rise(t, b(1, 4), ACT.trainers[1] - 0.1);
+  const own = [{ text: "Own", at: b(1, 1, 0.5) }, { text: "an", at: b(1, 2) }];
+  const education = { text: "education", at: b(1, 3) };
+  const business = { text: "business.", at: b(1, 4) };
+  const high = [{ text: "High", at: b(2, 3) }, { text: "quality", at: b(2, 3, 0.5) }, { text: "&", at: b(2, 4) }];
+  const cheap = [{ text: "extremely", at: b(2, 4, 0.5), accent: true }, { text: "affordable", at: b(3, 1), accent: true }];
+  const edu = { text: "education.", at: b(3, 1, 0.5) };
   return (
     <>
-      <Abs y={430} style={{ ...eyebrow(C.mutedOnInk), textAlign: "center", ...tag }}>Apex Global Center</Abs>
-      <Abs y={540}>
-        <Words
-          t={t}
-          size={140}
-          out={to - 0.12}
-          lines={[
-            [{ text: "Own", at: b(1, 1, 0.5) }, { text: "an", at: b(1, 2) }],
-            [{ text: "education", at: b(1, 3) }],
-            [{ text: "business.", at: b(1, 4) }],
-          ]}
-        />
+      <Abs y={H.tag} style={{ ...eyebrow(C.mutedOnInk), textAlign: "center", ...tag }}>Apex Global Center</Abs>
+      <Abs y={H.a.y}>
+        <Words t={t} size={H.a.size} out={to - 0.12} lines={L.land ? [[...own, education], [business]] : [own, [education], [business]]} />
       </Abs>
-      <Abs y={1030}>
-        <Words
-          t={t}
-          size={80}
-          out={to - 0.12}
-          tracking={-0.03}
-          lines={[
-            [{ text: "High", at: b(2, 3) }, { text: "quality", at: b(2, 3, 0.5) }, { text: "&", at: b(2, 4) }],
-            [{ text: "extremely", at: b(2, 4, 0.5), accent: true }, { text: "affordable", at: b(3, 1), accent: true }],
-            [{ text: "education.", at: b(3, 1, 0.5) }],
-          ]}
-        />
+      <Abs y={H.b.y}>
+        <Words t={t} size={H.b.size} out={to - 0.12} tracking={-0.03} lines={L.land ? [[...high, ...cheap], [edu]] : [high, cheap, [edu]]} />
       </Abs>
     </>
   );
 }
 
 function Trainers({ t }: { t: number }) {
+  const L = useLayout();
+  const { card: K, text: T } = L.trainers;
   const [from, to] = ACT.trainers;
   if (!within(t, ACT.trainers)) return null;
-  const card = rise(t, from, to - 0.12, 80);
-  const box: CSSProperties = { position: "absolute", left: SIDE, top: 520, width: 920, height: 690, borderRadius: 2, overflow: "hidden", background: C.ink2, ...card };
+  const box: CSSProperties = { position: "absolute", left: K.x, top: K.y, width: K.w, height: K.h, borderRadius: 2, overflow: "hidden", background: C.ink2, ...rise(t, from, to - 0.12, 80) };
   const fill: CSSProperties = { position: "absolute", inset: 0 };
+  const run = say("You run the business.", b(5, 1), BEAT / 2);
   return (
     <>
       <div style={box}>
@@ -98,23 +96,26 @@ function Trainers({ t }: { t: number }) {
         <Clip src="video/event-a.mp4" from={b(5)} to={b(5, 3)} start={4.0} style={fill} />
         <Clip src="video/event-b.mp4" from={b(5, 3)} to={to} start={9.0} style={fill} />
       </div>
-      <Abs y={1262}>
-        <Words t={t} size={76} align="left" out={to - 0.12} lines={[say("Trainers come", b(4, 2), BEAT / 2), say("from Apex HQ.", b(4, 3), BEAT / 2)]} />
+      <Abs x={T.x} y={T.y}>
+        <Words t={t} size={T.size} align="left" out={to - 0.12} lines={[say("Trainers come", b(4, 2), BEAT / 2), say("from Apex HQ.", b(4, 3), BEAT / 2)]} />
       </Abs>
-      <Abs y={1430}>
-        <Words t={t} size={76} align="left" out={to - 0.12} color={C.accent} lines={[say("You run the business.", b(5, 1), BEAT / 2)]} />
+      <Abs x={T.x} y={T.y + T.size * 2.2}>
+        <Words t={t} size={T.size} align="left" out={to - 0.12} color={C.accent} lines={L.land ? splitLines(run, 3) : [run]} />
       </Abs>
     </>
   );
 }
 
 function Reveal({ t }: { t: number }) {
+  const { reveal: R } = useLayout();
   const [, to] = ACT.reveal;
   if (!within(t, ACT.reveal)) return null;
   const all = say("Open an Apex Global Center in your *city.*", b(6, 1, 0.5), BEAT / 2);
+  const [one, two] = R.split;
+  const lines = two >= all.length ? [all.slice(0, one), all.slice(one)] : [all.slice(0, one), all.slice(one, two), all.slice(two)];
   return (
-    <Abs y={850}>
-      <Words t={t} size={128} out={to - 0.12} lines={[all.slice(0, 3), all.slice(3, 5), all.slice(5)]} />
+    <Abs y={R.y}>
+      <Words t={t} size={R.size} out={to - 0.12} lines={lines} />
     </Abs>
   );
 }
@@ -134,6 +135,8 @@ const WALL = [
 
 /** 50,000+ students: the counter runs up while a wall of real certificate photos scrolls past in three columns. */
 function Students({ t }: { t: number }) {
+  const L = useLayout();
+  const U = L.students;
   const [from, to] = ACT.students;
   if (!within(t, ACT.students)) return null;
   const n = Math.round(50000 * ease(progress(t, from + 0.1, 2.2 * BEAT)));
@@ -141,25 +144,23 @@ function Students({ t }: { t: number }) {
   const tileW = 296;
   const tileH = 360;
   const gap = 16;
-  const bandTop = 700;
-  const bandH = 920;
   const lift = ease(clamp01((t - from) / 0.55));
   const speeds = [95, 140, 115];
   return (
     <div style={exit(t, to)}>
-      <Abs y={290} style={{ ...eyebrow(C.accent), ...rise(t, from) }}>Our online platform</Abs>
-      <Abs y={340} style={{ fontFamily: FONT, fontWeight: 700, fontSize: 200, letterSpacing: "-0.05em", color: C.accent, lineHeight: 1, fontVariantNumeric: "tabular-nums", ...rise(t, from, Infinity, 30) }}>
+      <Abs x={U.eyebrow.x} y={U.eyebrow.y} style={{ ...eyebrow(C.accent), ...rise(t, from) }}>Our online platform</Abs>
+      <Abs y={U.count.y} style={{ fontFamily: FONT, fontWeight: 700, fontSize: U.count.size, letterSpacing: "-0.05em", color: C.accent, lineHeight: 1, fontVariantNumeric: "tabular-nums", ...rise(t, from, Infinity, 30) }}>
         {n.toLocaleString("en-US")}
         <span style={{ opacity: done ? 1 : 0 }}>+</span>
       </Abs>
-      <Abs y={570}>
-        <Words t={t} size={60} align="left" tracking={-0.02} lines={[say("students on our online platform.", b(11, 3), BEAT / 3)]} />
+      <Abs y={U.sub.y}>
+        <Words t={t} size={U.sub.size} align="left" tracking={-0.02} lines={splitLines(say("students on our online platform.", b(11, 3), BEAT / 3), U.sub.split)} />
       </Abs>
-      <div style={{ position: "absolute", left: 0, top: bandTop, width: 1080, height: bandH, overflow: "hidden" }}>
+      <div style={{ position: "absolute", left: 0, top: U.wall.y, width: L.W, height: U.wall.h, overflow: "hidden" }}>
         {[0, 1, 2].map((col) => {
-          const offset = (1 - lift) * bandH - speeds[col] * (t - from) - col * 120;
+          const offset = (1 - lift) * U.wall.h - speeds[col] * (t - from) - col * 120;
           return (
-            <div key={col} style={{ position: "absolute", left: SIDE + col * (tileW + gap), top: offset, display: "grid", gap }}>
+            <div key={col} style={{ position: "absolute", left: U.wall.x + col * (tileW + gap), top: offset, display: "grid", gap }}>
               {WALL.filter((_, i) => i % 3 === col).map((file) => (
                 <Img key={file} src={staticFile(`img/wall/${file}.jpg`)} style={{ width: tileW, height: tileH, objectFit: "cover", borderRadius: 2, display: "block" }} />
               ))}
@@ -181,35 +182,42 @@ const PARTNERS = [
 ];
 
 function Partners({ t }: { t: number }) {
+  const L = useLayout();
+  const P = L.partners;
   const [from] = ACT.partners;
   if (!within(t, ACT.partners, 0)) return null;
   const lands = [b(13, 3), b(13, 4), b(14, 1), b(14, 2), b(14, 3), b(14, 4)];
+  const gap = 24;
   return (
     <>
-      <Abs y={400} style={{ ...eyebrow(C.accentInk), ...rise(t, from) }}>Programs from partner institutions</Abs>
-      <Abs y={462}>
+      <Abs x={P.eyebrow.x} y={P.eyebrow.y} style={{ ...eyebrow(C.accentInk), fontSize: L.land ? 25 : 30, ...rise(t, from) }}>Programs from partner institutions</Abs>
+      <Abs y={P.head.y}>
         <Words
           t={t}
-          size={92}
+          size={P.head.size}
           align="left"
           color={C.ink}
           accent={C.accentInk}
-          lines={[say("Diplomas, degrees", b(13, 1, 0.5), BEAT / 2), say("and master's programs.", b(13, 2, 0.5), BEAT / 2)]}
+          lines={
+            P.head.three
+              ? [say("Diplomas, degrees", b(13, 1, 0.5), BEAT / 2), say("and master's", b(13, 2, 0.5), BEAT / 2), say("programs.", b(13, 3, 0.5), BEAT / 2)]
+              : [say("Diplomas, degrees", b(13, 1, 0.5), BEAT / 2), say("and master's programs.", b(13, 2, 0.5), BEAT / 2)]
+          }
         />
       </Abs>
       {PARTNERS.map((file, index) => {
-        const col = index % 2;
-        const row = Math.floor(index / 2);
+        const col = index % P.tiles.cols;
+        const row = Math.floor(index / P.tiles.cols);
         const u = ease(clamp01((t - lands[index]) / 0.3));
         return (
           <div
             key={file}
             style={{
               position: "absolute",
-              left: SIDE + col * (448 + 24),
-              top: 800 + row * (236 + 24),
-              width: 448,
-              height: 236,
+              left: P.tiles.x + col * (P.tiles.w + gap),
+              top: P.tiles.y + row * (P.tiles.h + gap),
+              width: P.tiles.w,
+              height: P.tiles.h,
               background: C.white,
               borderRadius: 2,
               display: "grid",
@@ -219,7 +227,7 @@ function Partners({ t }: { t: number }) {
               translate: `0 ${(1 - u) * 24}px`,
             }}
           >
-            <Img src={staticFile(`img/partners/${file}`)} style={{ maxWidth: 360, maxHeight: 172, width: "auto", height: "auto", objectFit: "contain" }} />
+            <Img src={staticFile(`img/partners/${file}`)} style={{ maxWidth: P.tiles.w * 0.8, maxHeight: P.tiles.h * 0.73, width: "auto", height: "auto", objectFit: "contain" }} />
           </div>
         );
       })}
@@ -229,23 +237,24 @@ function Partners({ t }: { t: number }) {
 
 /** The 90 counts up center stage, then travels into the timeline's header and stays there. */
 function Ninety({ t }: { t: number }) {
+  const L = useLayout();
+  const N = L.ninety;
   const [from] = ACT.ninety;
   if (!within(t, [from, ACT.months[1]])) return null;
   const leave = clamp01((t - (ACT.months[1] - 0.1)) / 0.18);
   const count = Math.round(90 * ease(progress(t, from, 2 * BEAT)));
   const u = step(t - ACT.months[0], glide);
-  const size = lerp(400, 150, u);
   const block: CSSProperties = {
     position: "absolute",
-    left: lerp(540, SIDE, u),
-    top: lerp(880, 292, u),
+    left: lerp(N.from.x, N.to.x, u),
+    top: lerp(N.from.y, N.to.y, u),
     translate: `${lerp(-50, 0, u)}% ${lerp(-50, 0, u)}%`,
     display: "flex",
     alignItems: "baseline",
     gap: "0.12em",
     fontFamily: FONT,
     fontWeight: 700,
-    fontSize: size,
+    fontSize: lerp(N.from.size, N.to.size, u),
     letterSpacing: "-0.05em",
     lineHeight: 1,
     color: C.accent,
@@ -256,7 +265,7 @@ function Ninety({ t }: { t: number }) {
   const days = ease(clamp01((t - b(15, 3)) / 0.3));
   return (
     <>
-      <Abs y={480} style={{ ...eyebrow(C.accent), textAlign: "center", ...rise(t, from, ACT.months[0] - 0.1) }}>
+      <Abs y={N.eyebrow} style={{ ...eyebrow(C.accent), textAlign: "center", ...rise(t, from, ACT.months[0] - 0.1) }}>
         The 3-month launch programme
       </Abs>
       <div style={block}>
@@ -266,8 +275,8 @@ function Ninety({ t }: { t: number }) {
       <div
         style={{
           position: "absolute",
-          left: lerp(540, SIDE, u),
-          top: lerp(1130, 460, u),
+          left: lerp(N.from.x, N.to.x, u),
+          top: lerp(N.subFrom.y, N.subTo.y, u),
           translate: `${lerp(-50, 0, u)}% 0`,
           width: 920,
           textAlign: u < 0.5 ? "center" : "left",
@@ -276,7 +285,7 @@ function Ninety({ t }: { t: number }) {
       >
         <Words
           t={t}
-          size={lerp(64, 40, u)}
+          size={lerp(N.subFrom.size, N.subTo.size, u)}
           weight={u < 0.5 ? 700 : 500}
           color={u < 0.5 ? C.paper : C.mutedOnInk}
           tracking={-0.02}
@@ -295,16 +304,15 @@ const MONTHS = [
 ];
 
 function Months({ t }: { t: number }) {
+  const L = useLayout();
+  const M = L.months;
   const [from, to] = ACT.months;
   if (!within(t, ACT.months)) return null;
-  const railTop = 600;
-  const railBottom = 1404;
   const fill = progress(t, from, 3 * 4 * BEAT);
-  const tops = [580, 904, 1168];
   return (
     <div style={exit(t, to)}>
-      <div style={{ position: "absolute", left: SIDE + 14, top: railTop, width: 4, height: railBottom - railTop, background: C.ruleOnInk }} />
-      <div style={{ position: "absolute", left: SIDE + 14, top: railTop, width: 4, height: (railBottom - railTop) * fill, background: C.accent }} />
+      <div style={{ position: "absolute", left: M.rail.x, top: M.rail.top, width: 4, height: M.rail.bottom - M.rail.top, background: C.ruleOnInk }} />
+      <div style={{ position: "absolute", left: M.rail.x, top: M.rail.top, width: 4, height: (M.rail.bottom - M.rail.top) * fill, background: C.accent }} />
       {MONTHS.map((month, index) => {
         // Month 1 waits half a bar so it never crosses the 90 while it travels into the header.
         const land = index === 0 ? b(16, 2) : b(16 + index);
@@ -315,8 +323,8 @@ function Months({ t }: { t: number }) {
             <div
               style={{
                 position: "absolute",
-                left: SIDE + 4,
-                top: tops[index] + 10,
+                left: M.rail.x - 10,
+                top: M.tops[index] + 10,
                 width: 24,
                 height: 24,
                 borderRadius: 12,
@@ -324,7 +332,7 @@ function Months({ t }: { t: number }) {
                 border: `3px solid ${interpolateColors(lit, [0, 1], ["#3A4447", C.accent])}`,
               }}
             />
-            <Abs x={SIDE + 70} y={tops[index]} w={850}>
+            <Abs x={M.x} y={M.tops[index]} w={M.w}>
               <div style={{ ...eyebrow(C.accent), fontSize: 28, ...rise(t, land) }}>Month {month.n}</div>
               <div style={{ fontFamily: FONT, fontWeight: 700, fontSize: 76, letterSpacing: "-0.03em", color: C.paper, lineHeight: 1.1, ...rise(t, land + 0.06) }}>{month.title}</div>
               <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
@@ -342,10 +350,10 @@ function Months({ t }: { t: number }) {
           </div>
         );
       })}
-      <Abs y={1478}>
+      <Abs x={M.line.x} y={M.line.y} w={L.land ? 700 : undefined}>
         <Words
           t={t}
-          size={52}
+          size={M.line.size}
           align="left"
           tracking={-0.025}
           lines={[say("From signed contract", b(19, 1), BEAT / 2), say("to independent operation,", b(19, 2, 0.5), BEAT / 2), say("in *90* *days.*", b(19, 4), BEAT / 2)]}
@@ -363,12 +371,13 @@ const TIERS = [
 ];
 
 function Tiers({ t }: { t: number }) {
+  const L = useLayout();
+  const T = L.tiers;
   const [from] = ACT.tiers;
   if (!within(t, ACT.tiers, 0)) return null;
-  const top0 = 700;
   const tileH = 170;
   const gap = 18;
-  const tileTop = (i: number) => top0 + i * (tileH + gap);
+  const tileTop = (i: number) => T.ladder.y + i * (tileH + gap);
   const lands = [b(22, 2, 0.5), b(22, 2), b(22, 1, 0.5), b(22, 1)];
   // One orange tile travels up the ladder: on District once it lands, then one tier per beat in bar 23.
   const hiY = track(t, [[0, tileTop(3)], [b(23, 1), tileTop(2)], [b(23, 2), tileTop(1)], [b(23, 3), tileTop(0)]], glide);
@@ -379,7 +388,7 @@ function Tiers({ t }: { t: number }) {
       return (
         <div
           key={tier.tier}
-          style={{ position: "absolute", left: SIDE + 40, top: tileTop(i), width: 840, height: tileH, display: "flex", alignItems: "center", justifyContent: "space-between", opacity: u, translate: `0 ${(1 - u) * 40}px` }}
+          style={{ position: "absolute", left: T.ladder.x + 40, top: tileTop(i), width: T.ladder.w - 80, height: tileH, display: "flex", alignItems: "center", justifyContent: "space-between", opacity: u, translate: `0 ${(1 - u) * 40}px` }}
         >
           <div>
             <div style={{ ...eyebrow(sub), fontSize: 24 }}>Tier {tier.tier}</div>
@@ -395,23 +404,23 @@ function Tiers({ t }: { t: number }) {
     });
   return (
     <>
-      <Abs y={330} style={{ ...eyebrow(C.accent), ...rise(t, from) }}>Four franchise tiers</Abs>
-      <Abs y={392}>
-        <Words t={t} size={80} align="left" lines={[say("Start with a district.", b(21, 1, 0.5), BEAT / 2), say("*Grow* from there.", b(21, 3, 0.5), BEAT / 2)]} />
+      <Abs x={T.eyebrow.x} y={T.eyebrow.y} style={{ ...eyebrow(C.accent), ...rise(t, from) }}>Four franchise tiers</Abs>
+      <Abs y={T.head.y}>
+        <Words t={t} size={T.head.size} align="left" lines={[say("Start with a district.", b(21, 1, 0.5), BEAT / 2), say("*Grow* from there.", b(21, 3, 0.5), BEAT / 2)]} />
       </Abs>
       {TIERS.map((tier, i) => {
         const u = ease(clamp01((t - lands[i]) / 0.3));
         return (
-          <div key={tier.tier} style={{ position: "absolute", left: SIDE, top: tileTop(i), width: 920, height: tileH, background: C.ink2, borderRadius: 2, opacity: u, translate: `0 ${(1 - u) * 40}px` }} />
+          <div key={tier.tier} style={{ position: "absolute", left: T.ladder.x, top: tileTop(i), width: T.ladder.w, height: tileH, background: C.ink2, borderRadius: 2, opacity: u, translate: `0 ${(1 - u) * 40}px` }} />
         );
       })}
       {labels(C.paper, C.mutedOnInk)}
       {/* The orange tile masks an ink copy of the labels, so text turns ink exactly where the tile covers it. */}
-      <div style={{ position: "absolute", left: SIDE, top: hiY, width: 920, height: tileH, background: C.accent, borderRadius: 2, opacity: hiOn, overflow: "hidden" }}>
-        <div style={{ position: "absolute", left: -SIDE, top: -hiY, width: 1080, height: 1920 }}>{labels(C.ink, C.ink)}</div>
+      <div style={{ position: "absolute", left: T.ladder.x, top: hiY, width: T.ladder.w, height: tileH, background: C.accent, borderRadius: 2, opacity: hiOn, overflow: "hidden" }}>
+        <div style={{ position: "absolute", left: -T.ladder.x, top: -hiY, width: L.W, height: L.H }}>{labels(C.ink, C.ink)}</div>
       </div>
-      <Abs y={1482}>
-        <Words t={t} size={40} weight={500} align="left" color={C.mutedOnInk} tracking={-0.01} lines={[say("Strong performers can apply to move up a tier.", b(22, 3), BEAT / 3)]} />
+      <Abs x={T.caption.x} y={T.caption.y}>
+        <Words t={t} size={40} weight={500} align="left" color={C.mutedOnInk} tracking={-0.01} lines={splitLines(say("Strong performers can apply to move up a tier.", b(22, 3), BEAT / 3), T.caption.split)} />
       </Abs>
     </>
   );
@@ -431,14 +440,15 @@ const SHOTS: Shot[] = [
 
 /** Eight real graduation moments, one per beat, each with a slow push-in. */
 function Montage({ t }: { t: number }) {
+  const { montage: M } = useLayout();
   const [from, to] = ACT.montage;
   if (!within(t, ACT.montage, 0)) return null;
   const cut = (i: number) => from + i * BEAT;
   const fill: CSSProperties = { position: "absolute", inset: 0, width: "100%", height: "100%" };
   return (
     <>
-      <Abs y={470} style={{ ...eyebrow(C.accent), textAlign: "center", ...rise(t, from) }}>Our students</Abs>
-      <div style={{ position: "absolute", left: SIDE, top: 540, width: 920, height: 740, borderRadius: 2, overflow: "hidden", background: C.ink2, ...rise(t, from, Infinity, 60) }}>
+      <Abs y={M.eyebrow} style={{ ...eyebrow(C.accent), textAlign: "center", ...rise(t, from) }}>Our students</Abs>
+      <div style={{ position: "absolute", left: M.card.x, top: M.card.y, width: M.card.w, height: M.card.h, borderRadius: 2, overflow: "hidden", background: C.ink2, ...rise(t, from, Infinity, 60) }}>
         {SHOTS.map((shot, i) => {
           const a = cut(i);
           const z = i === SHOTS.length - 1 ? to : cut(i + 1);
@@ -453,13 +463,14 @@ function Montage({ t }: { t: number }) {
 }
 
 function Support({ t }: { t: number }) {
+  const { support: P } = useLayout();
   const [, to] = ACT.support;
   if (!within(t, ACT.support)) return null;
   return (
-    <Abs y={960} style={{ translate: "0 -50%" }}>
+    <Abs y={P.y} style={{ translate: "0 -50%" }}>
       <Words
         t={t}
-        size={160}
+        size={P.size}
         out={to - 0.1}
         lines={[[{ text: "Support", at: b(26, 1) }], [{ text: "from", at: b(26, 2) }, { text: "day", at: b(26, 2, 0.5) }], [{ text: "one.", at: b(26, 3), accent: true }]]}
       />
@@ -468,34 +479,26 @@ function Support({ t }: { t: number }) {
 }
 
 function Rule({ t, y, at }: { t: number; y: number; at: number }) {
+  const L = useLayout();
+  const w = L.land ? 800 : L.W - 2 * L.S;
   const u = ease(clamp01((t - at) / 0.4));
-  return <div style={{ position: "absolute", left: SIDE, top: y, width: 920 * u, height: 2, background: C.ruleOnInk }} />;
+  return <div style={{ position: "absolute", left: (L.W - w) / 2, top: y, width: w * u, height: 2, background: C.ruleOnInk }} />;
 }
 
 function End({ t }: { t: number }) {
+  const { end: E } = useLayout();
   const [from] = ACT.end;
   if (t < from - 0.05) return null;
   const line: CSSProperties = { fontFamily: FONT, textAlign: "center", letterSpacing: "-0.02em" };
   return (
     <>
-      <Abs y={520}>
-        <Words t={t} size={76} lines={[say("Apex Global Center", b(27, 1, 0.5), BEAT / 2)]} />
+      <Abs y={E.name}>
+        <Words t={t} size={84} lines={[say("Apex Global Center", b(27, 1, 0.5), BEAT / 2)]} />
       </Abs>
-      <Rule t={t} y={670} at={b(27, 3)} />
-      <Abs y={712} style={{ ...eyebrow(C.accent), textAlign: "center", ...rise(t, b(27, 3)) }}>Meet us at</Abs>
-      <Abs y={760}>
-        <Words t={t} size={180} tracking={-0.05} lines={[[{ text: "VIFS", at: b(27, 3, 0.5) }, { text: "2026", at: b(27, 4), accent: true }]]} />
-      </Abs>
-      <Abs y={962} style={{ ...line, fontSize: 40, color: C.mutedOnInk, ...rise(t, b(27, 4, 0.5)) }}>Vietnam International Franchise Show</Abs>
-      <Abs y={1016} style={{ ...line, fontSize: 52, fontWeight: 700, color: C.paper, lineHeight: 1.2, ...rise(t, b(28, 1)) }}>
-        29 to 31 October
-        <br />
-        SECC, Ho Chi Minh City
-      </Abs>
-      <Rule t={t} y={1168} at={b(28, 2)} />
-      <Abs y={1206} style={{ ...eyebrow(C.accent), textAlign: "center", ...rise(t, b(28, 2)) }}>Franchise enquiries</Abs>
-      <Abs y={1254} style={{ ...line, fontSize: 60, fontWeight: 700, color: C.paper, ...rise(t, b(28, 2, 0.5)) }}>WhatsApp +65 9225 9877</Abs>
-      <Abs y={1342} style={{ ...line, fontSize: 44, color: C.mutedOnInk, ...rise(t, b(28, 3)) }}>apexglobalcenter.com</Abs>
+      <Rule t={t} y={E.rule} at={b(27, 3)} />
+      <Abs y={E.eyebrow} style={{ ...eyebrow(C.accent), textAlign: "center", ...rise(t, b(27, 3)) }}>Franchise enquiries</Abs>
+      <Abs y={E.whatsapp} style={{ ...line, fontSize: 64, fontWeight: 700, color: C.paper, ...rise(t, b(27, 3, 0.5)) }}>WhatsApp +65 9225 9877</Abs>
+      <Abs y={E.url} style={{ ...line, fontSize: 46, color: C.mutedOnInk, ...rise(t, b(27, 4)) }}>apexglobalcenter.com</Abs>
     </>
   );
 }

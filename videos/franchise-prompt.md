@@ -5,7 +5,7 @@ Read `videos/BRAND.md` first. It holds the brief, the look, the claims and what 
 </context>
 
 <inputs>
-Decided (v2): 1080x1920, 60 fps preview, 240 fps final, dark, 29 bars at 118.004 BPM, 58.981 s. Music: "Midnight Funk", Michael Ramir C., Mixkit Stock Music Free License, `public/audio/midnight-funk.mp3` (gitignored). Edit: song bars 3 to 32 (`src/film/edit.json`). Measured grid spread 4.2 ms.
+Decided (v2): 1080x1920 and 1920x1080, 60 fps preview, 240 fps final, dark, 28 bars at 118.004 BPM, 56.947 s. Music: "Midnight Funk", Michael Ramir C., Mixkit Stock Music Free License, `public/audio/midnight-funk.mp3` (gitignored). Edit: song bars 3 to 31 (`src/film/edit.json`). Measured grid spread 4.2 ms.
 </inputs>
 
 <direction>
@@ -22,7 +22,7 @@ Banned: prices, fees, splits, royalty, profit, payback, naming a partner college
 </cast>
 
 <structure>
-118 BPM, 4/4, 29 bars (v2). One beat is 0.508 s, one bar 2.034 s. Something happens on every beat.
+118 BPM, 4/4, 28 bars (v2). Rendered twice from one scene set: vertical 1080x1920 and landscape 1920x1080 (src/film/layout.ts). One beat is 0.508 s, one bar 2.034 s. Something happens on every beat.
 
 Bar 1, opening. The mark traces itself at the top and fills on beat 3. "Own an / education / business." lands word by word from 0.25 s.
 Bars 2 and 3, the promise. "High quality & / extremely affordable / education." builds under it on eighths.
@@ -36,7 +36,7 @@ Bars 16 to 20, the programme. The 90 travels to the header. A rail fills over th
 Bars 21 to 23, the tiers. "Start with a district. Grow from there." Four tiles land in bar 22, then the orange highlight climbs one tier per beat in bar 23.
 Bars 24 and 25, the people. Eight graduation moments, one per beat, Kingston and ECU, photos pushing in slowly.
 Bar 26, the promise. "Support from day one."
-Bars 27 to 29, ending. The mark returns, "Apex Global Center", "Meet us at VIFS 2026", Vietnam International Franchise Show, 29 to 31 October, SECC, Ho Chi Minh City, then WhatsApp +65 9225 9877 and apexglobalcenter.com. Music fades over the last 1.4 s.
+Bars 27 and 28, ending. The mark returns, "Apex Global Center", "Franchise enquiries", WhatsApp +65 9225 9877 and apexglobalcenter.com. Music fades over the last 1.4 s. (The VIFS 2026 card was removed on the product owner's request.)
 </structure>
 
 <gotchas>

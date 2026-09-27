@@ -6,10 +6,10 @@
   "segments": [
     {
       "fromBar": 3,
-      "toBar": 32,
-      "why": "Skip the first 3 quiet intro bars. Film bars 1 to 5 ride the build (song bars 3 to 7): hook, then the trainers footage. The full groove lands on film bar 6 (song bar 8), the brand reveal. 29 bars, v2 with the network, students and VIFS scenes."
+      "toBar": 31,
+      "why": "Skip the first 3 quiet intro bars. The full groove lands on film bar 6 (song bar 8), the brand reveal. 28 bars: v2 without the VIFS card, a two-bar end card."
     }
   ],
-  "duration": 58.981,
+  "duration": 56.947,
   "fadeOutSeconds": 1.4
 }

@@ -4,12 +4,12 @@ The look, rules, assets and code for every Apex Global Center (AGC) film. Each f
 Sources: the rebuilt AGC site (design branch, served on localhost), its `src/styles/global.css` ("Apex Editorial" tokens), Apex's internal franchise notes (tiers, the revised 90-day plan, the pitch playbook), the house deck standard and the product owner's answers on 2026-09-27. When this file and those sources disagree, the sources win.
 
 ## The brief (from the interview, 2026-09-27)
-- Plays: social, with sound (WhatsApp, Instagram, TikTok, franchise show screens, VIFS 2026 in Ho Chi Minh City). Format: **9:16, 1080x1920**. Length: about 59 s (v2).
+- Plays: social, with sound (WhatsApp, Instagram, TikTok, franchise show screens, VIFS 2026 in Ho Chi Minh City). Format: **9:16, 1080x1920**, and a 16:9 1920x1080 cut from the same scenes. Length: about 57 s (v2).
 - Audience: prospective franchisees. Pitch playbook: white-collar working adults and entrepreneurs who want a business of their own, not full-time educators.
 - Music: "Midnight Funk", Michael Ramir C., Mixkit Stock Music Free License (social posts and online ads, no attribution; not TV, radio, CDs or games). Cut on bars with `scripts/audio-edit.py`.
 - Must show: **the four franchise tiers and the 3-month (90-day) launch support.** Sahi: make that attractive.
 - **No prices.** No licence fee, no revenue split, no royalty, no profit or payback figures. (Product owner, 2026-09-27.)
-- **v2 notes (product owner, 2026-09-27):** the hook carries "High quality & extremely affordable education"; show the 40+ office network on an animated world map and the 50,000+ students on the online platform right after "Open an Apex Global Center in your city"; use Kingston event footage and certificate photos freely, ECU included; end on a VIFS 2026 card.
+- **v2 notes (product owner, 2026-09-27):** the hook carries "High quality & extremely affordable education"; show the 40+ office network on an animated world map and the 50,000+ students on the online platform right after "Open an Apex Global Center in your city"; use Kingston event footage and certificate photos freely, ECU included; end on a VIFS 2026 card (removed later the same day, on request).
 - Ingredients (defaults chosen overnight, Sahi to overrule): brand element = the Apex mark drawing itself; words = big punchlines word by word plus short labels; transitions = cuts on the beat plus one travelling element (the tier tile); extras = real event footage in framed cards, partner institution logos, a CTA end card.
 - Ending: WhatsApp +65 9225 9877 and apexglobalcenter.com (both public on the site).
 
