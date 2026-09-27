@@ -4,13 +4,13 @@ import { DURATION as FILM_DURATION } from "./film/cues";
 import { Film } from "./film/Film";
 import { Brag, BRAG_DURATION } from "./brag/Brag";
 
-type Props = { fps: number; debug?: boolean };
+type Props = { fps: number; debug?: boolean; whatsapp?: string };
 
 // fps comes from props: 60 in Studio and for stills, 240 for the final render (motion blur).
-const metadata = (duration: number) => ({ props }: { props: Props }) => ({
-  fps: props.fps,
-  durationInFrames: Math.round(duration * props.fps),
-});
+const metadata = (duration: number) => ({ props }: { props: Record<string, unknown> }) => {
+  const fps = Number((props as Props).fps ?? 60);
+  return { fps, durationInFrames: Math.round(duration * fps) };
+};
 
 export function Root() {
   return (

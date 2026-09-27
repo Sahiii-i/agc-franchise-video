@@ -485,7 +485,7 @@ function Rule({ t, y, at }: { t: number; y: number; at: number }) {
   return <div style={{ position: "absolute", left: (L.W - w) / 2, top: y, width: w * u, height: 2, background: C.ruleOnInk }} />;
 }
 
-function End({ t }: { t: number }) {
+function End({ t, whatsapp }: { t: number; whatsapp: string }) {
   const { end: E } = useLayout();
   const [from] = ACT.end;
   if (t < from - 0.05) return null;
@@ -497,7 +497,7 @@ function End({ t }: { t: number }) {
       </Abs>
       <Rule t={t} y={E.rule} at={b(27, 3)} />
       <Abs y={E.eyebrow} style={{ ...eyebrow(C.accent), textAlign: "center", ...rise(t, b(27, 3)) }}>Franchise enquiries</Abs>
-      <Abs y={E.whatsapp} style={{ ...line, fontSize: 64, fontWeight: 700, color: C.paper, ...rise(t, b(27, 3, 0.5)) }}>WhatsApp +65 9225 9877</Abs>
+      <Abs y={E.whatsapp} style={{ ...line, fontSize: 64, fontWeight: 700, color: C.paper, ...rise(t, b(27, 3, 0.5)) }}>WhatsApp {whatsapp}</Abs>
       <Abs y={E.url} style={{ ...line, fontSize: 46, color: C.mutedOnInk, ...rise(t, b(27, 4)) }}>apexglobalcenter.com</Abs>
     </>
   );
@@ -521,7 +521,8 @@ const HITS: Hit[] = [
   { at: b(27), file: "impactBell_heavy_000.wav", volume: 0.22 },
 ];
 
-export function Film() {
+/** `whatsapp` is the enquiry line on the end card: Keith's by default, Lester's copies pass "+65 9851 2611". */
+export function Film({ whatsapp = "+65 9225 9877" }: { fps?: number; debug?: boolean; whatsapp?: string }) {
   const t = useTime();
   const light = t >= ACT.partners[0] && t < ACT.partners[1];
   return (
@@ -537,7 +538,7 @@ export function Film() {
       <Tiers t={t} />
       <Montage t={t} />
       <Support t={t} />
-      <End t={t} />
+      <End t={t} whatsapp={whatsapp} />
       <BrandMark t={t} />
       <Music file="film-edit.wav" volume={0.85} />
       <Sfx hits={HITS} />
