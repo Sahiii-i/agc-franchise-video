@@ -1,0 +1,15 @@
+{
+  "source": "public/audio/midnight-funk.mp3",
+  "out": "public/audio/film-edit.wav",
+  "bpm": 118.004,
+  "firstDownbeat": 0.2444,
+  "segments": [
+    {
+      "fromBar": 3,
+      "toBar": 32,
+      "why": "Skip the first 3 quiet intro bars. Film bars 1 to 5 ride the build (song bars 3 to 7): hook, then the trainers footage. The full groove lands on film bar 6 (song bar 8), the brand reveal. 29 bars, v2 with the network, students and VIFS scenes."
+    }
+  ],
+  "duration": 58.981,
+  "fadeOutSeconds": 1.4
+}

@@ -1,0 +1,11 @@
+node_modules
+out
+.DS_Store
+# Licensed music, event footage, student photos and partner logos stay local and are never published.
+public/audio
+public/video
+public/img
+brag-output/work
+brag-output/brag.mp4
+brag-output/brag.jpg
+deliverables

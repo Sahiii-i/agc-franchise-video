@@ -1,0 +1,11 @@
+{
+  "source": "public/audio/simon-says.mp3",
+  "out": "public/audio/brag-edit.wav",
+  "bpm": 119.995,
+  "firstDownbeat": 1.9893,
+  "segments": [
+    { "fromBar": 15, "toBar": 25, "why": "Bar 15 is where the track lifts; ten bars is 20 seconds, inside brag's 18 to 22 second sweet spot." }
+  ],
+  "duration": 20.0,
+  "fadeOutSeconds": 1.0
+}
